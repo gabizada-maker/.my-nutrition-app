@@ -1,2 +1,2 @@
-LIBZBARO
-LIBGL1-MESA-GLX
+libzbar0
+libgl1-mesa-glx 
