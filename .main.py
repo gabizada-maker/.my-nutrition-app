@@ -53,3 +53,4 @@ if st.button("בדוק ברקוד ידני"):
         st.write(f"**סוכר:** {sugar} גרם | **מלח:** {salt} גרם")
     else:
         st.error("מוצר לא נמצא.") 
+
