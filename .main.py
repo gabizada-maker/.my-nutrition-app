@@ -1,53 +1,54 @@
-import streamlit as st
+
 import requests
+from PIL import Image
+from pyzbar.pyzbar import decode
 
-# כותרת האפליקציה
-st.title("סורק תזונה חכם 🥗")
+st.title("סורק סוכר ומלח חכם 🚀")
 
-# אתחול המונים בזיכרון
-if 'totals' not in st.session_state:
-    st.session_state.totals = {"sugar": 0.0, "salt": 0.0}
-
-# פונקציה לשליפת נתונים לפי ברקוד
-def get_data(barcode):
+# פונקציה לשליפת נתונים מהמאגר
+def get_nutrition_info(barcode):
     url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
-    try:
-        res = requests.get(url).json()
-        if res.get('status') == 1:
-            p = res['product']
-            nutr = p.get('nutriments', {})
-            return {
-                "name": p.get('product_name', 'מוצר לא ידוע'),
-                "sugar": nutr.get('sugars_100g', 0),
-                "salt": nutr.get('salt_100g', 0)
-            }
-    except:
-        return None
-    return None
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if data.get("status") == 1:
+            product = data.get("product", {})
+            name = product.get("product_name", "מוצר ללא שם")
+            nutrients = product.get("nutriments", {})
+            sugar = nutrients.get("sugars_100g", "לא ידוע")
+            salt = nutrients.get("salt_100g", "לא ידוע")
+            return name, sugar, salt
+    return None, None, None
 
-# --- ממשק המצלמה ---
-st.subheader("סריקה מהירה 📸")
-picture = st.camera_input("צלם את הברקוד מהאריזה")
+# אפשרות 1: צילום תמונה
+img_file = st.camera_input("צלם ברקוד של מוצר")
 
-# --- הזנה ידנית ---
-st.divider()
-barcode_input = st.text_input("הזן ברקוד ידנית (אם הצילום לא עובד):")
-weight = st.number_input("כמות בגרמים שצרכת:", min_value=1, value=100)
-
-if st.button("חשב והוסף ליומן"):
-    # כאן נשתמש בברקוד שהוזן
-    product = get_data(barcode_input)
-    if product:
-        s = (weight / 100) * product['sugar']
-        n = (weight / 100) * product['salt']
-        st.session_state.totals['sugar'] += s
-        st.session_state.totals['salt'] += n
-        st.success(f"הוספת: {product['name']}")
+if img_file:
+    # פתיחת התמונה ופענוח הברקוד
+    img = Image.open(img_file)
+    barcodes = decode(img)
+   
+    if barcodes:
+        barcode_value = barcodes[0].data.decode('utf-8')
+        st.success(f"ברקוד זוהה: {barcode_value}")
+       
+        name, sugar, salt = get_nutrition_info(barcode_value)
+        if name:
+            st.subheader(f"תוצאות עבור: {name}")
+            st.metric("סוכר (ל-100 גרם)", f"{sugar} גרם")
+            st.metric("מלח (ל-100 גרם)", f"{salt} גרם")
+        else:
+            st.warning("הברקוד זוהה, אך המוצר לא נמצא במאגר.")
     else:
-        st.error("הברקוד לא נמצא במאגר")
+        st.error("לא הצלחתי למצוא ברקוד בתמונה. נסה לצלם מקרוב וברור יותר.")
 
-# הצגת נתונים מצטברים
-st.sidebar.header("סיכום יומי")
-st.sidebar.metric("סך סוכר (גרם) 🍭", round(st.session_state.totals['sugar'], 2))
-st.sidebar.metric("סך מלח (גרם) 🧂", round(st.session_state.totals['salt'], 2))
-
+# אפשרות 2: הזנה ידנית (גיבוי)
+st.write("---")
+manual_barcode = st.text_input("או הכנס ברקוד ידנית:")
+if st.button("בדוק ברקוד ידני"):
+    name, sugar, salt = get_nutrition_info(manual_barcode)
+    if name:
+        st.subheader(f"תוצאות עבור: {name}")
+        st.write(f"**סוכר:** {sugar} גרם | **מלח:** {salt} גרם")
+    else:
+        st.error("מוצר לא נמצא.")
