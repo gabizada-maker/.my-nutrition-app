@@ -1,4 +1,9 @@
 
+import streamlit as st
+import requests
+from PIL import Image
+from pyzbar.pyzbar import decode
+
 st.title("סורק סוכר ומלח חכם 🚀")
 
 # פונקציה לשליפת נתונים מהמאגר
