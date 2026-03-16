@@ -1,5 +1,4 @@
-
-import streamlit as st
+ import streamlit as st
 import requests
 from PIL import Image
 from pyzbar.pyzbar import decode
@@ -53,3 +52,4 @@ if st.button("בדוק ברקוד ידני"):
         st.write(f"**סוכר:** {sugar} גרם | **מלח:** {salt} גרם")
     else:
         st.error("מוצר לא נמצא.") 
+
